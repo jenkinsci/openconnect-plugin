@@ -12,7 +12,10 @@
 	      </f:entry>	 
 	      <f:entry title="Authentication Group" field="authGroup">
 	        <f:textbox value="${instance.authGroup}"/>
-	      </f:entry>	           
+	      </f:entry>	
+	      <f:entry title="Connection Timeout(seconds)" field="connectTimeout">
+	        <f:textbox value="${instance.connectTimeout}" default="5"/>
+	      </f:entry>		                 
           <f:entry title="VPN Certificate Is Untrusted" field="noCertCheck">
             <f:checkbox checked="${instance.noCertCheck}" default="true"/>
           </f:entry>	      

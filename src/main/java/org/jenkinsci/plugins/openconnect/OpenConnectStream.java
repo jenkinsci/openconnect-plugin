@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.openconnect;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,8 @@ public class OpenConnectStream extends BufferedInputStream implements Runnable {
 	private Pattern pidPattern = Pattern.compile("Continuing in background; pid (\\d+)");
 	private String pid;
 	private boolean terminate;
+    private static final String className = OpenConnectStream.class.getName();
+    private static Logger log = Logger.getLogger(className);	
 		
 	public OpenConnectStream(InputStream inputStream) {
 		super(inputStream);
@@ -35,42 +38,39 @@ public class OpenConnectStream extends BufferedInputStream implements Runnable {
 			}
 		} catch(Exception e) {
 			e.printStackTrace();
-			System.err.println("Stream shutdown unexpectedly: "+e.getMessage());			
+			log.severe("Stream shutdown unexpectedly: "+e.getMessage());			
 		}
 	}
 	
 	private void processData(String data) {
-		System.out.println(data);
+		log.info(data);
+		OpenConnect process = OpenConnect.getInstance();
 		Matcher invalidCertMatcher = invalidCertPattern.matcher(data);
 		if(invalidCertMatcher.find()) {
-			System.err.println("Invalid certificate found, shutting down");
+			log.warning("Invalid certificate found, shutting down");
 			OpenConnect.getInstance().disconnect();
 			return;
 		}
 		Matcher usernameMatcher = usernamePattern.matcher(data);
 		if(usernameMatcher.find()) {
-			OpenConnect process = OpenConnect.getInstance();
 			process.writeString(process.getUsername()+"\n");
 			return;
 		}
 		Matcher passwordMatcher = passwordPattern.matcher(data);
 		if(passwordMatcher.find()) {
-			OpenConnect process = OpenConnect.getInstance();
 			process.writeString(process.getPassword()+"\n");
 			return;
 		}
 		Matcher pidMatcher = pidPattern.matcher(data);
 		if(pidMatcher.find()) {
 			pid = pidMatcher.group(1);
-			OpenConnect process = OpenConnect.getInstance();
 			process.setProcessId(pid);
-			System.out.println("Connection established!");		
+			process.setConnected(true);		
 		}
 		Matcher connectedMatcher = connectedPattern.matcher(data);
 		if(connectedMatcher.find()) {
-			System.out.println("Connection established!");
-		}
-		
+			process.setConnected(true);
+		}		
 	}
 	
 	public void terminate() {

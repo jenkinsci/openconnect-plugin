@@ -26,14 +26,9 @@ public class OpenConnectDisconnectPlugin extends Notifier {
     
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-    	listener.getLogger().println("Waiting to disconnect from VPN...");
-    	try {
-			Thread.sleep(15000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-        OpenConnect.getInstance().disconnect();
-        listener.getLogger().println("Disconnected from VPN");
+        listener.getLogger().println("Disconnecting from VPN [In Progress]");
+    	OpenConnect.getInstance().disconnect();
+        listener.getLogger().println("Disconnecting from VPN [Complete]");
         return true;
     }
 

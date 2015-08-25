@@ -9,10 +9,10 @@ import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
-import hudson.tasks.Publisher;
 import hudson.util.Scrambler;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -25,6 +25,7 @@ public class OpenConnectPlugin extends Builder {
     private final String password;
     private final String url;
     private final String authGroup;
+    private final String connectTimeout;
     private final boolean noCertCheck;
 
     @DataBoundConstructor
@@ -32,6 +33,7 @@ public class OpenConnectPlugin extends Builder {
                                  String password,
                                  String url,
                                  String authGroup,
+                                 String connectTimeout,
                                  boolean noCertCheck) {
 
     	this.username = Scrambler.scramble(username);
@@ -39,6 +41,7 @@ public class OpenConnectPlugin extends Builder {
     	this.url = url;
     	this.authGroup = authGroup;
     	this.noCertCheck = noCertCheck;
+    	this.connectTimeout = connectTimeout;
     }
     
     public String getUsername() {
@@ -47,6 +50,10 @@ public class OpenConnectPlugin extends Builder {
     
     public String getPassword() {
     	return Scrambler.descramble(password);
+    }
+    
+    public String getConnectTimeout() {
+    	return connectTimeout;
     }
     
     public String getUrl() {
@@ -72,6 +79,24 @@ public class OpenConnectPlugin extends Builder {
        	vpn.setUrl(getUrl());
        	listener.getLogger().println("Connecting to VPN @ "+vpn.getUrl());
        	vpn.connect();
+   		int timeoutInSeconds = StringUtils.trimToNull(getConnectTimeout()) == null?30:Integer.parseInt(getConnectTimeout().trim());
+   		while(!vpn.isError() && !vpn.isConnected()) {
+   			try {
+   				Thread.sleep(1000);
+   				if(--timeoutInSeconds == 0) {
+   					vpn.setError(true);
+   				}
+   			} catch (InterruptedException e) {
+   				e.printStackTrace();
+   				vpn.setError(true);
+   				listener.getLogger().println("Error while detecting if VPN is connected: "+e.getMessage());
+   			}
+   		}
+   		if(vpn.isError()) {
+   			vpn.disconnect();
+   			build.setResult(Result.FAILURE);
+   			return false;
+   		}
         return true;
     }
 

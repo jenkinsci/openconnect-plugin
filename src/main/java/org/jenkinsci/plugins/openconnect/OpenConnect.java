@@ -3,6 +3,9 @@ package org.jenkinsci.plugins.openconnect;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+
+import org.jfree.util.Log;
 
 public class OpenConnect {
 
@@ -13,6 +16,8 @@ public class OpenConnect {
 	private String url;
 	private boolean noCertCheck;
 	private String processId;
+	private boolean connected;
+	private boolean error;
 	private Process process;
 	private Process disconnectProcess;
 	private OpenConnectStream inputStreamReader;
@@ -23,6 +28,8 @@ public class OpenConnect {
 	private Thread errorStreamThread;
 	private Thread disconnectInputStreamThread;
 	private Thread disconnectErrorStreamThread;
+    private static final String className = OpenConnect.class.getName();
+    private static Logger log = Logger.getLogger(className);	
 	
 	private OpenConnect() {}
 	
@@ -48,11 +55,12 @@ public class OpenConnect {
 					getInputStreamThread().start();
 					getErrorStreamThread().start();
 					process.waitFor();
-					System.out.println("Exited VPN Process");
+					log.info("Exited VPN Process");
 				} catch(Exception e) {
+					error = true;
 					e.printStackTrace();
 					disconnect();
-					System.err.println("Failed to execute VPN console: "+e.getMessage());
+					log.warning("Failed to execute VPN console: "+e.getMessage());
 				}				
 			}
 		}).start();
@@ -79,7 +87,9 @@ public class OpenConnect {
 			f.setAccessible(true);
 			setProcessId(String.valueOf(f.getInt(process)));
 		} catch(Exception e) {
+			error = true;
 			e.printStackTrace();
+			Log.error("Failed to load process id: "+e.getMessage());
 		}
 	}
 	
@@ -98,7 +108,9 @@ public class OpenConnect {
 				disconnectProcess.waitFor();
 			}
 		} catch(Exception e) {
+			error = true;
 			e.printStackTrace();
+			log.warning("Failed to execute disconnect process: "+e.getMessage());
 		} finally {
 			cleanup();
 		}
@@ -114,7 +126,8 @@ public class OpenConnect {
 				process.getOutputStream().write(data);
 				process.getOutputStream().flush();
 			} catch(Exception e) {
-				System.out.println("Failed to write to VPN console: "+e.getMessage());
+				error = true;
+				log.warning("Failed to write to VPN console: "+e.getMessage());
 			}
 		}
 	}
@@ -181,15 +194,17 @@ public class OpenConnect {
 	
 	private void cleanup() {	
 		//reset attributes for next connection
-		System.out.println("Cleaning Up!");
+		Log.info("Cleaning Up!");
 		username = null;
 		password = null;
 		authGroup = null;
 		url = null;
 		noCertCheck = false;
-		processId = null;		
+		processId = null;	
+		error = false;
+		connected = false;
 		if(process != null) {	
-			System.out.println("Cleaning Up Process!");
+			log.info("Cleaning Up Process!");
 			getInputStreamReader().terminate();
 			getErrorStreamReader().terminate();
 			process.destroy();			
@@ -200,7 +215,7 @@ public class OpenConnect {
 			process = null;
 		}
 		if(disconnectProcess != null) {
-			System.out.println("Cleaning Up Disconnect Process!");
+			log.info("Cleaning Up Disconnect Process!");
 			getDisconnectErrorStreamReader().terminate();
 			getDisconnectInputStreamReader().terminate();
 			disconnectProcess.destroy();
@@ -259,4 +274,20 @@ public class OpenConnect {
 	public void setProcessId(String processId) {
 		this.processId = processId;
 	}
+
+	public boolean isConnected() {
+		return connected;
+	}
+
+	public void setConnected(boolean connected) {
+		this.connected = connected;
+	}
+
+	public boolean isError() {
+		return error;
+	}
+
+	public void setError(boolean error) {
+		this.error = error;
+	}	
 }
