@@ -1,0 +1,8 @@
+<!--
+  This view is used to render the installed plugins page.
+-->
+<div>
+  Connects to a VPN using OpenConnect(Cisco AnyConnect) as part of your build/deployment process.
+  <br/>
+  <b>WARNING!</b> Linux only support
+</div>

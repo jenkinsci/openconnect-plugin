@@ -1,0 +1,20 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+  <f:section title="VPN Configuration">
+	      <f:entry title="Username" field="username">
+	        <f:textbox value="${instance.username}"/>
+	      </f:entry>
+	      <f:entry title="Password" field="password">
+	        <f:password value="${instance.password}"/>
+	      </f:entry>
+	      <f:entry title="VPN URL" field="url">
+	        <f:textbox value="${instance.url}"/>
+	      </f:entry>	 
+	      <f:entry title="Authentication Group" field="authGroup">
+	        <f:textbox value="${instance.authGroup}"/>
+	      </f:entry>	           
+          <f:entry title="VPN Certificate Is Untrusted" field="noCertCheck">
+            <f:checkbox checked="${instance.noCertCheck}" default="true"/>
+          </f:entry>	      
+  </f:section>
+</j:jelly>
