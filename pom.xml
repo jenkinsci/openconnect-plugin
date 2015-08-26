@@ -34,7 +34,13 @@
               <role>Lead Developer</role>
           </roles>
       </developer>
-  </developers>  
+  </developers>
+  
+	<scm>
+	  <connection>scm:git:ssh://github.com/jenkinsci/openconnect-plugin.git</connection>
+	  <developerConnection>scm:git:ssh://git@github.com/jenkinsci/openconnect-plugin.git</developerConnection>
+	  <url>https://github.com/jenkinsci/openconnect-plugin</url>
+	</scm>    
   
   <build>
       <plugins>
